@@ -29,11 +29,13 @@ const Main_Table = ({
     limit = 10,
     search = '',
     statusFilter = 'all',
+    planFilter = 'all',
     sortField = 'updatedAt',
     sortOrder = 'desc',
     loading = false,
     onSearchChange,
     onStatusFilterChange,
+    onPlanFilterChange,
     onSortChange,
     onPageChange,
     onLimitChange,
@@ -47,6 +49,10 @@ const Main_Table = ({
     const [isStatusPopupOpen, setIsStatusPopupOpen] = useState(false);
     const statusPopupRef = useRef(null);
 
+    // Popover state for Shopify Plan Column
+    const [isPlanPopupOpen, setIsPlanPopupOpen] = useState(false);
+    const planPopupRef = useRef(null);
+
     // Expandable Search state
     const [isSearchOpen, setIsSearchOpen] = useState(Boolean(search));
     const searchInputRef = useRef(null);
@@ -55,6 +61,9 @@ const Main_Table = ({
     const [columnOrder, setColumnOrder] = useState([
         'storeDomain',
         'storeEmail',
+        'country',
+        'shopifyPlan',
+        'customersCount',
         'onboardingStatus',
         'isActive',
         'discounts',
@@ -72,11 +81,14 @@ const Main_Table = ({
         }
     }, [isSearchOpen]);
 
-    // Close popup when clicking outside
+    // Close popups when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (statusPopupRef.current && !statusPopupRef.current.contains(event.target)) {
                 setIsStatusPopupOpen(false);
+            }
+            if (planPopupRef.current && !planPopupRef.current.contains(event.target)) {
+                setIsPlanPopupOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -139,6 +151,38 @@ const Main_Table = ({
         { label: 'Store Closed', value: 'closed', badgeClass: 'bg-amber-50 text-amber-700 border-amber-200' },
         { label: 'Store Reopened', value: 'reopened', badgeClass: 'bg-sky-50 text-sky-700 border-sky-200' },
     ];
+
+    const planOptions = [
+        { label: 'All Plans', value: 'all' },
+        { label: 'Grow', value: 'grow', dotColor: 'bg-emerald-500' },
+        { label: 'Basic', value: 'basic', dotColor: 'bg-blue-500' },
+        { label: 'Plus', value: 'plus', dotColor: 'bg-purple-500' },
+        { label: 'Advanced', value: 'advanced', dotColor: 'bg-indigo-500' },
+        { label: 'Development', value: 'development', dotColor: 'bg-amber-500' },
+        { label: 'Paid', value: 'paid', dotColor: 'bg-teal-500' },
+    ];
+
+    // Helper to style Shopify plans with distinct badge colors
+    const getPlanBadgeClass = (plan) => {
+        const lower = String(plan || '').toLowerCase();
+        if (lower.includes('plus')) {
+            return 'bg-purple-50 text-purple-700 border-purple-200';
+        }
+        if (lower.includes('grow')) {
+            return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        }
+        if (lower.includes('basic')) {
+            return 'bg-blue-50 text-blue-700 border-blue-200';
+        }
+        if (lower.includes('advanced')) {
+            return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+        }
+        if (lower.includes('paid')) {
+            return 'bg-teal-50 text-teal-700 border-teal-200';
+        }
+        // Development / Developer Preview / default
+        return 'bg-amber-50 text-amber-700 border-amber-200';
+    };
 
     const columns = useMemo(
         () => [
@@ -273,6 +317,46 @@ const Main_Table = ({
                     return (
                         <span className="text-slate-500 font-medium text-xs">
                             {val ? new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                        </span>
+                    );
+                },
+            },
+            {
+                accessorKey: 'country',
+                header: 'Country',
+                enableSorting: true,
+                cell: ({ getValue }) => {
+                    const val = getValue();
+                    return (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                            {val && val !== 'N/A' ? val : '—'}
+                        </span>
+                    );
+                },
+            },
+            {
+                accessorKey: 'shopifyPlan',
+                header: 'Shopify Plan',
+                enableSorting: true,
+                cell: ({ getValue }) => {
+                    const val = getValue() || 'Development';
+                    const badgeClass = getPlanBadgeClass(val);
+                    return (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border capitalize ${badgeClass}`}>
+                            {val}
+                        </span>
+                    );
+                },
+            },
+            {
+                accessorKey: 'customersCount',
+                header: 'Customers',
+                enableSorting: true,
+                cell: ({ getValue }) => {
+                    const val = Number(getValue()) || 0;
+                    return (
+                        <span className="text-xs font-semibold text-slate-700">
+                            {val.toLocaleString()}
                         </span>
                     );
                 },
@@ -457,6 +541,7 @@ const Main_Table = ({
                                     const isSorted = header.column.getIsSorted();
                                     const badgeText = getSortBadgeText(header.id, isSorted);
                                     const isStatusColumn = header.id === 'isActive';
+                                    const isPlanColumn = header.id === 'shopifyPlan';
                                     const isFirstColumn = headerIndex === 0;
 
                                     return (
@@ -592,6 +677,126 @@ const Main_Table = ({
                                                                                                 option.value === 'closed' ? 'bg-amber-500' :
                                                                                                     option.value === 'reopened' ? 'bg-sky-500' : 'bg-slate-400'
                                                                                             }`} />
+                                                                                        {option.label}
+                                                                                    </span>
+                                                                                    <span className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isChecked
+                                                                                        ? 'bg-slate-900 border-slate-900 text-white'
+                                                                                        : 'border-slate-300 bg-white'
+                                                                                        }`}>
+                                                                                        {isChecked && <Check className="w-3 h-3 stroke-3" />}
+                                                                                    </span>
+                                                                                </button>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })()}
+
+                                                {/* Shopify Plan Column Multi-Select Filter Popup Trigger */}
+                                                {isPlanColumn && (() => {
+                                                    const selectedList = planFilter && planFilter !== 'all'
+                                                        ? planFilter.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
+                                                        : [];
+                                                    const hasActiveFilter = selectedList.length > 0;
+
+                                                    const handleTogglePlan = (val) => {
+                                                        if (!onPlanFilterChange) return;
+                                                        if (val === 'all') {
+                                                            onPlanFilterChange('all');
+                                                            return;
+                                                        }
+                                                        let nextList;
+                                                        if (selectedList.includes(val)) {
+                                                            nextList = selectedList.filter((item) => item !== val);
+                                                        } else {
+                                                            nextList = [...selectedList, val];
+                                                        }
+
+                                                        if (nextList.length === 0 || nextList.length >= planOptions.filter(o => o.value !== 'all').length) {
+                                                            onPlanFilterChange('all');
+                                                        } else {
+                                                            onPlanFilterChange(nextList.join(','));
+                                                        }
+                                                    };
+
+                                                    return (
+                                                        <div className="relative inline-block text-left" ref={planPopupRef}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setIsPlanPopupOpen((prev) => !prev);
+                                                                }}
+                                                                className={`p-1 rounded-md border transition-all flex items-center gap-1 ${hasActiveFilter
+                                                                    ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                                                                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                                                                    }`}
+                                                                title="Filter Plan (Multi-Select)"
+                                                            >
+                                                                <Filter className="w-3 h-3" />
+                                                                {hasActiveFilter && (
+                                                                    <span className="w-4 h-4 rounded-full bg-white text-slate-900 text-[10px] font-bold flex items-center justify-center -mr-0.5">
+                                                                        {selectedList.length}
+                                                                    </span>
+                                                                )}
+                                                            </button>
+
+                                                            {/* Plan Filter Floating Popup Menu */}
+                                                            {isPlanPopupOpen && (
+                                                                <div
+                                                                    className="absolute left-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 p-2.5 text-xs normal-case font-normal animate-in fade-in slide-in-from-top-2 duration-150"
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                >
+                                                                    <div className="px-2.5 py-1 font-bold text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-100 mb-1.5 flex items-center justify-between">
+                                                                        <span>Filter Plan {hasActiveFilter && `(${selectedList.length})`}</span>
+                                                                        {hasActiveFilter && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    if (onPlanFilterChange) onPlanFilterChange('all');
+                                                                                }}
+                                                                                className="text-rose-600 hover:underline font-semibold text-[10px]"
+                                                                            >
+                                                                                Reset
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+
+                                                                    <div className="space-y-1">
+                                                                        {/* All Plans option */}
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleTogglePlan('all')}
+                                                                            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors ${!hasActiveFilter
+                                                                                ? 'bg-slate-100 text-slate-900 font-bold'
+                                                                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                                                                }`}
+                                                                        >
+                                                                            <span className="flex items-center gap-2">
+                                                                                <span className="inline-block w-2 h-2 rounded-full bg-slate-400" />
+                                                                                All Plans
+                                                                            </span>
+                                                                            {!hasActiveFilter && <Check className="w-3.5 h-3.5 text-slate-900" />}
+                                                                        </button>
+
+                                                                        {/* Multi-selectable specific plans with checkboxes */}
+                                                                        {planOptions.filter((opt) => opt.value !== 'all').map((option) => {
+                                                                            const isChecked = selectedList.includes(option.value);
+                                                                            return (
+                                                                                <button
+                                                                                    key={option.value}
+                                                                                    type="button"
+                                                                                    onClick={() => handleTogglePlan(option.value)}
+                                                                                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors ${isChecked
+                                                                                        ? 'bg-slate-50 text-slate-900 font-bold'
+                                                                                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                                                                        }`}
+                                                                                >
+                                                                                    <span className="flex items-center gap-2">
+                                                                                        <span className={`inline-block w-2 h-2 rounded-full ${option.dotColor || 'bg-slate-400'}`} />
                                                                                         {option.label}
                                                                                     </span>
                                                                                     <span className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isChecked

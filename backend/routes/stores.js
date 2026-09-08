@@ -89,6 +89,7 @@ function formatStore(storeDoc, detailsDoc) {
 
   const createdAt = store.createdAt || details.installed_at || new Date().toISOString();
   const updatedAt = store.updatedAt || details.updated_at || createdAt;
+  const installedAt = details.installed_at || createdAt;
 
   const currentStatus = getStoreStatus({ ...store, pastEvents, isStoreClosed: store.isStoreClosed, isActive: store.isActive });
 
@@ -99,16 +100,22 @@ function formatStore(storeDoc, detailsDoc) {
     ownerName,
     ownerEmail,
     storeEmail,
+    phone: details.phone || store.phone || '',
     country: details.country || store.country || 'N/A',
+    appPlan: details.app_plan || store.plan?.name || 'Free',
     shopifyPlan: details.shopify_plan || details.shopify_plan_type || 'Development',
     shopifyPlanType: details.shopify_plan_type || '',
-    customersCount: details.customers_count ?? 0,
+    customersCount: Number(details.customers_count ?? store.customersCount ?? 0),
+    onboardingCompletedSteps: Array.isArray(details.onboarding_completed_steps)
+      ? details.onboarding_completed_steps
+      : [],
     isActive: store.isActive !== undefined ? Boolean(store.isActive) : true,
     isStoreClosed: Boolean(store.isStoreClosed),
     status: currentStatus,
     onboardingStatus: store.onboarding?.isCompleted ?? store.onboardingStatus ?? true,
     onboarding: store.onboarding || { isCompleted: true },
     plan: store.plan || { name: details.app_plan || 'Free', status: 'active' },
+    installedAt,
     createdAt,
     updatedAt,
     pastEvents,
@@ -174,7 +181,10 @@ router.get('/', async (req, res) => {
           s.ownerName?.toLowerCase().includes(q) ||
           s.ownerEmail?.toLowerCase().includes(q) ||
           s.storeEmail?.toLowerCase().includes(q) ||
-          s.country?.toLowerCase().includes(q)
+          s.country?.toLowerCase().includes(q) ||
+          s.phone?.toLowerCase().includes(q) ||
+          s.shopifyPlan?.toLowerCase().includes(q) ||
+          s.appPlan?.toLowerCase().includes(q)
         );
       });
     }
@@ -189,6 +199,22 @@ router.get('/', async (req, res) => {
 
       if (selectedStatuses.length > 0 && !selectedStatuses.includes('all')) {
         combined = combined.filter((s) => selectedStatuses.includes(s.status));
+      }
+    }
+
+    // Apply Plan Filter (supports multi-select comma-separated values, e.g. plan=basic,plus,grow)
+    const { plan = 'all' } = req.query;
+    if (plan && plan !== 'all') {
+      const selectedPlans = plan
+        .split(',')
+        .map((p) => p.trim().toLowerCase())
+        .filter(Boolean);
+
+      if (selectedPlans.length > 0 && !selectedPlans.includes('all')) {
+        combined = combined.filter((s) => {
+          const storePlanLower = (s.shopifyPlan || 'development').toLowerCase();
+          return selectedPlans.some((sel) => storePlanLower.includes(sel) || sel.includes(storePlanLower));
+        });
       }
     }
 

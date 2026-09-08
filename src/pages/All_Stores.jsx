@@ -16,6 +16,7 @@ const All_Stores = ({ onTotalCountChange }) => {
     // Read filter / pagination / sorting state from URL search parameters
     const search = searchParams.get('search') || '';
     const statusFilter = searchParams.get('status') || 'all';
+    const planFilter = searchParams.get('plan') || 'all';
     const datePreset = searchParams.get('datePreset') || 'all';
     const startDate = searchParams.get('startDate') || '';
     const endDate = searchParams.get('endDate') || '';
@@ -47,6 +48,7 @@ const All_Stores = ({ onTotalCountChange }) => {
                 const params = new URLSearchParams({
                     search,
                     status: statusFilter,
+                    plan: planFilter,
                     startDate,
                     endDate,
                     sortField,
@@ -90,7 +92,7 @@ const All_Stores = ({ onTotalCountChange }) => {
         return () => {
             controller.abort();
         };
-    }, [search, statusFilter, startDate, endDate, sortField, sortOrder, page, limit, onTotalCountChange]);
+    }, [search, statusFilter, planFilter, startDate, endDate, sortField, sortOrder, page, limit, onTotalCountChange]);
 
     const handleDateFilterChange = (range) => {
         updateParams({
@@ -131,6 +133,7 @@ const All_Stores = ({ onTotalCountChange }) => {
                     limit={limit}
                     search={search}
                     statusFilter={statusFilter}
+                    planFilter={planFilter}
                     datePreset={datePreset}
                     startDate={startDate}
                     endDate={endDate}
@@ -142,6 +145,9 @@ const All_Stores = ({ onTotalCountChange }) => {
                     }}
                     onStatusFilterChange={(val) => {
                         updateParams({ status: val, page: 1 });
+                    }}
+                    onPlanFilterChange={(val) => {
+                        updateParams({ plan: val, page: 1 });
                     }}
                     onDateFilterChange={handleDateFilterChange}
                     onSortChange={(field, order) => {

@@ -280,8 +280,15 @@ const Store_Details = () => {
   const ownerEmail = storeData.ownerEmail || storeData.storeEmail || 'N/A';
   const phone = storeData.phone || storeData.phoneNumber || 'N/A';
   const region = storeData.region || storeData.country || storeData.countryName || 'N/A';
-
-
+  const shopifyPlan = storeData.shopifyPlan || storeData.shopifyPlanType || 'Development';
+  const appPlan = storeData.appPlan || storeData.plan?.name || 'Free';
+  const customersCount = Number(storeData.customersCount ?? 0);
+  const installedAtFormatted = storeData.installedAt
+    ? new Date(storeData.installedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+    : 'N/A';
+  const completedSteps = Array.isArray(storeData.onboardingCompletedSteps)
+    ? storeData.onboardingCompletedSteps
+    : [];
 
   return (
     <div className="py-6 px-4 md:px-8 bg-slate-50 min-h-[calc(100vh-64px)] w-full">
@@ -322,18 +329,88 @@ const Store_Details = () => {
                   Phone
                 </span>
                 <p className="font-semibold text-slate-900 text-sm mt-0.5">
-                  {phone}
+                  {phone && phone.trim() ? phone : '—'}
                 </p>
               </div>
 
               <div>
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Region
+                  Country / Region
                 </span>
                 <p className="font-semibold text-slate-900 text-sm mt-0.5">
                   {region}
                 </p>
               </div>
+
+              <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-3">
+                <div>
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                    Shopify Plan
+                  </span>
+                  {(() => {
+                    const lower = (shopifyPlan || '').toLowerCase();
+                    let badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                    if (lower.includes('plus')) badgeColor = 'bg-purple-50 text-purple-700 border-purple-200';
+                    else if (lower.includes('grow')) badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                    else if (lower.includes('basic')) badgeColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                    else if (lower.includes('advanced')) badgeColor = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+                    else if (lower.includes('paid')) badgeColor = 'bg-teal-50 text-teal-700 border-teal-200';
+
+                    return (
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border capitalize ${badgeColor}`}>
+                        {shopifyPlan}
+                      </span>
+                    );
+                  })()}
+                </div>
+
+                <div>
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                    App Plan
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border capitalize bg-sky-50 text-sky-700 border-sky-200">
+                    {appPlan}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Customers
+                  </span>
+                  <p className="font-semibold text-slate-900 text-sm mt-0.5">
+                    {customersCount.toLocaleString()}
+                  </p>
+                </div>
+
+                <div>
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Installed At
+                  </span>
+                  <p className="font-semibold text-slate-900 text-sm mt-0.5">
+                    {installedAtFormatted}
+                  </p>
+                </div>
+              </div>
+
+              {completedSteps.length > 0 && (
+                <div className="pt-2 border-t border-slate-100">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                    Onboarding Steps Completed
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {completedSteps.map((step, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 capitalize"
+                      >
+                        {step.replace(/^step_/, '').replace(/_/g, ' ')}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
