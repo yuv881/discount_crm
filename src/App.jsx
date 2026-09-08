@@ -5,22 +5,47 @@ import Store_Details from './pages/Store_Details';
 import Analytics from './pages/Analytics';
 import Sidebar from './components/Sidebar';
 import DateFilter from './components/DateFilter';
+import { useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Copy, Check } from 'lucide-react';
 
 
 function NavigationBar({
   totalCount = 0,
-  datePreset = 'all',
-  startDate = '',
-  endDate = '',
-  onDateFilterChange,
 }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [copied, setCopied] = useState(false);
   const isStoreDetail = location.pathname.startsWith('/store/');
   const storeDomain = isStoreDetail ? decodeURIComponent(location.pathname.replace('/store/', '')) : '';
   const storeName = storeDomain ? storeDomain.split('.')[0] : '';
+
+  const datePreset = searchParams.get('datePreset') || 'all';
+  const startDate = searchParams.get('startDate') || '';
+  const endDate = searchParams.get('endDate') || '';
+
+  const handleDateFilterChange = ({ preset, startDate: start, endDate: end }) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (!preset || preset === 'all') {
+        next.delete('datePreset');
+      } else {
+        next.set('datePreset', preset);
+      }
+      if (start) {
+        next.set('startDate', start);
+      } else {
+        next.delete('startDate');
+      }
+      if (end) {
+        next.set('endDate', end);
+      } else {
+        next.delete('endDate');
+      }
+      next.set('page', '1');
+      return next;
+    });
+  };
 
   const handleCopyDomain = () => {
     if (storeDomain) {
@@ -87,13 +112,13 @@ function NavigationBar({
             </div>
 
             {/* Date Filter component placed in header */}
-            {location.pathname === '/' && onDateFilterChange && (
+            {location.pathname === '/' && (
               <DateFilter
                 selectedPreset={datePreset}
                 startDate={startDate}
                 endDate={endDate}
-                onDateFilterChange={onDateFilterChange}
-                onClear={() => onDateFilterChange({ preset: 'all', startDate: '', endDate: '' })}
+                onDateFilterChange={handleDateFilterChange}
+                onClear={() => handleDateFilterChange({ preset: 'all', startDate: '', endDate: '' })}
               />
             )}
           </div>
@@ -105,50 +130,38 @@ function NavigationBar({
 
 function App() {
   const [totalStoresCount, setTotalStoresCount] = useState(0);
-  const [datePreset, setDatePreset] = useState('all');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-
-  const handleDateFilterChange = ({ preset, startDate: start, endDate: end }) => {
-    setDatePreset(preset);
-    setStartDate(start || '');
-    setEndDate(end || '');
-  };
 
   return (
     <Router>
-      <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans">
-        <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0">
-          <NavigationBar
-            totalCount={totalStoresCount}
-            datePreset={datePreset}
-            startDate={startDate}
-            endDate={endDate}
-            onDateFilterChange={handleDateFilterChange}
-          />
-          <main className="flex-1">
-            <Routes>
-              <Route
-                path="/"
-                element={
-                  <All_Stores
-                    onTotalCountChange={setTotalStoresCount}
-                    datePreset={datePreset}
-                    startDate={startDate}
-                    endDate={endDate}
-                    onDateFilterChange={handleDateFilterChange}
-                  />
-                }
-              />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/store/:domain" element={<Store_Details />} />
-            </Routes>
-
-          </main>
-        </div>
-      </div>
+      <AppContent totalStoresCount={totalStoresCount} setTotalStoresCount={setTotalStoresCount} />
     </Router>
+  );
+}
+
+function AppContent({ totalStoresCount, setTotalStoresCount }) {
+  return (
+    <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans">
+      <Sidebar />
+      <div className="flex-1 flex flex-col min-w-0">
+        <NavigationBar
+          totalCount={totalStoresCount}
+        />
+        <main className="flex-1">
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <All_Stores
+                  onTotalCountChange={setTotalStoresCount}
+                />
+              }
+            />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/store/:domain" element={<Store_Details />} />
+          </Routes>
+        </main>
+      </div>
+    </div>
   );
 }
 

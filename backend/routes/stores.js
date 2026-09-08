@@ -32,6 +32,41 @@ function normalizeDiscount(d) {
   };
 }
 
+// Helper to determine exact store status from pastEvents and flags
+export function getStoreStatus(store) {
+  const rawEvents = Array.isArray(store?.pastEvents)
+    ? store.pastEvents
+    : store?.pastEvents && typeof store.pastEvents === 'object'
+      ? [store.pastEvents]
+      : [];
+
+  let latestEventName = '';
+  if (rawEvents.length > 0) {
+    const sorted = [...rawEvents].sort((a, b) => {
+      const timeA = typeof a === 'string' ? new Date(a).getTime() : new Date(a?.timestamp || a?.createdAt || a?.date || 0).getTime();
+      const timeB = typeof b === 'string' ? new Date(b).getTime() : new Date(b?.timestamp || b?.createdAt || b?.date || 0).getTime();
+      return timeB - timeA;
+    });
+    const latest = sorted[0];
+    if (typeof latest === 'string') {
+      latestEventName = latest;
+    } else if (typeof latest === 'object' && latest !== null) {
+      latestEventName = latest.eventName || latest.title || latest.name || latest.status || latest.event || latest.type || '';
+    }
+  }
+
+  const lowerEvent = latestEventName.toLowerCase();
+  if (lowerEvent.includes('reopen') || lowerEvent.includes('reopened')) {
+    return 'reopened';
+  } else if (lowerEvent.includes('close') || lowerEvent.includes('closed') || store?.isStoreClosed) {
+    return 'closed';
+  } else if (lowerEvent.includes('uninstall') || lowerEvent.includes('uninstalled') || store?.isActive === false) {
+    return 'uninstalled';
+  } else {
+    return 'installed';
+  }
+}
+
 // Helper to merge store and store_details
 function formatStore(storeDoc, detailsDoc) {
   const store = storeDoc ? (storeDoc.toObject ? storeDoc.toObject() : storeDoc) : {};
@@ -55,6 +90,8 @@ function formatStore(storeDoc, detailsDoc) {
   const createdAt = store.createdAt || details.installed_at || new Date().toISOString();
   const updatedAt = store.updatedAt || details.updated_at || createdAt;
 
+  const currentStatus = getStoreStatus({ ...store, pastEvents, isStoreClosed: store.isStoreClosed, isActive: store.isActive });
+
   return {
     _id: store._id?.toString() || details._id?.toString() || domain,
     storeDomain: domain,
@@ -68,6 +105,7 @@ function formatStore(storeDoc, detailsDoc) {
     customersCount: details.customers_count ?? 0,
     isActive: store.isActive !== undefined ? Boolean(store.isActive) : true,
     isStoreClosed: Boolean(store.isStoreClosed),
+    status: currentStatus,
     onboardingStatus: store.onboarding?.isCompleted ?? store.onboardingStatus ?? true,
     onboarding: store.onboarding || { isCompleted: true },
     plan: store.plan || { name: details.app_plan || 'Free', status: 'active' },
@@ -141,14 +179,17 @@ router.get('/', async (req, res) => {
       });
     }
 
-    // Apply Status Filter
+    // Apply Status Filter (supports multi-select comma-separated values, e.g. status=installed,uninstalled)
     if (status && status !== 'all') {
-      combined = combined.filter((s) => {
-        if (status === 'active') return s.isActive && !s.isStoreClosed;
-        if (status === 'uninstalled') return !s.isActive && !s.isStoreClosed;
-        if (status === 'closed') return s.isStoreClosed;
-        return true;
-      });
+      const selectedStatuses = status
+        .split(',')
+        .map((st) => st.trim().toLowerCase())
+        .filter(Boolean)
+        .map((st) => (st === 'active' ? 'installed' : st));
+
+      if (selectedStatuses.length > 0 && !selectedStatuses.includes('all')) {
+        combined = combined.filter((s) => selectedStatuses.includes(s.status));
+      }
     }
 
     // Apply Date Range Filter (on createdAt or updatedAt)

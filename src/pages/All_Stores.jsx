@@ -1,45 +1,47 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Main_Table from '../components/Main_Table';
 import { TableSkeleton } from '../components/SkeletonLoader';
 import { AlertCircle } from 'lucide-react';
 
-const All_Stores = ({
-    onTotalCountChange,
-    datePreset: propDatePreset = 'all',
-    startDate: propStartDate = '',
-    endDate: propEndDate = '',
-    onDateFilterChange: propOnDateFilterChange,
-}) => {
+const All_Stores = ({ onTotalCountChange }) => {
     const [discounts, setDiscounts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-
-    // Global & status filter states
-    const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
-
-    // Local fallback Date range filter states
-    const [localDatePreset, setLocalDatePreset] = useState('all');
-    const [localStartDate, setLocalStartDate] = useState('');
-    const [localEndDate, setLocalEndDate] = useState('');
-
-    const datePreset = propOnDateFilterChange ? propDatePreset : localDatePreset;
-    const startDate = propOnDateFilterChange ? propStartDate : localStartDate;
-    const endDate = propOnDateFilterChange ? propEndDate : localEndDate;
-
-    // Sorting & Pagination
-    const [sortField, setSortField] = useState('updatedAt');
-    const [sortOrder, setSortOrder] = useState('desc');
-    const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(10);
     const [totalCount, setTotalCount] = useState(0);
 
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    // Read filter / pagination / sorting state from URL search parameters
+    const search = searchParams.get('search') || '';
+    const statusFilter = searchParams.get('status') || 'all';
+    const datePreset = searchParams.get('datePreset') || 'all';
+    const startDate = searchParams.get('startDate') || '';
+    const endDate = searchParams.get('endDate') || '';
+    const sortField = searchParams.get('sortField') || 'updatedAt';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.max(1, parseInt(searchParams.get('limit') || '10', 10));
+
+    // Helper to update specific search params in URL cleanly
+    const updateParams = useCallback((updates) => {
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            Object.entries(updates).forEach(([key, val]) => {
+                if (val === undefined || val === null || val === '' || val === 'all' || (key === 'page' && val === 1)) {
+                    next.delete(key);
+                } else {
+                    next.set(key, String(val));
+                }
+            });
+            return next;
+        });
+    }, [setSearchParams]);
 
     useEffect(() => {
         const controller = new AbortController();
-        
+
         async function loadStores() {
             try {
                 const params = new URLSearchParams({
@@ -56,7 +58,7 @@ const All_Stores = ({
                 const res = await fetch(`/api/stores?${params.toString()}`, {
                     signal: controller.signal,
                 });
-                
+
                 if (!res.ok) {
                     throw new Error(`HTTP error! status: ${res.status}`);
                 }
@@ -91,14 +93,12 @@ const All_Stores = ({
     }, [search, statusFilter, startDate, endDate, sortField, sortOrder, page, limit, onTotalCountChange]);
 
     const handleDateFilterChange = (range) => {
-        if (propOnDateFilterChange) {
-            propOnDateFilterChange(range);
-        } else {
-            setLocalDatePreset(range.preset);
-            setLocalStartDate(range.startDate || '');
-            setLocalEndDate(range.endDate || '');
-        }
-        setPage(1);
+        updateParams({
+            datePreset: range.preset,
+            startDate: range.startDate || '',
+            endDate: range.endDate || '',
+            page: 1,
+        });
     };
 
     const handleRowClick = (storeDomain) => {
@@ -138,23 +138,20 @@ const All_Stores = ({
                     sortOrder={sortOrder}
                     loading={loading}
                     onSearchChange={(val) => {
-                        setSearch(val);
-                        setPage(1);
+                        updateParams({ search: val, page: 1 });
                     }}
                     onStatusFilterChange={(val) => {
-                        setStatusFilter(val);
-                        setPage(1);
+                        updateParams({ status: val, page: 1 });
                     }}
                     onDateFilterChange={handleDateFilterChange}
                     onSortChange={(field, order) => {
-                        setSortField(field);
-                        setSortOrder(order);
-                        setPage(1);
+                        updateParams({ sortField: field, sortOrder: order, page: 1 });
                     }}
-                    onPageChange={(newPage) => setPage(newPage)}
+                    onPageChange={(newPage) => {
+                        updateParams({ page: newPage });
+                    }}
                     onLimitChange={(newLimit) => {
-                        setLimit(newLimit);
-                        setPage(1);
+                        updateParams({ limit: newLimit, page: 1 });
                     }}
                     onRowClick={handleRowClick}
                 />
