@@ -489,10 +489,10 @@ const Main_Table = ({
     return (
         <div className="w-full bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
             {/* Toolbar: Expandable Search */}
-            <div className="p-4 border-b border-slate-100 bg-white flex items-center justify-end">
-                <div className="flex items-center gap-3">
+            <div className="p-3 sm:p-4 border-b border-slate-100 bg-white flex items-center justify-end">
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
                     {isSearchOpen || search ? (
-                        <div className="relative flex items-center animate-in fade-in zoom-in-95 duration-150">
+                        <div className="relative flex items-center animate-in fade-in zoom-in-95 duration-150 w-full sm:w-80">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                                 <Search className="w-4 h-4" />
                             </div>
@@ -502,7 +502,7 @@ const Main_Table = ({
                                 value={search}
                                 onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
                                 placeholder="Search stores..."
-                                className="w-64 sm:w-80 pl-9 pr-8 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all placeholder:text-slate-400 text-slate-900 font-medium"
+                                className="w-full pl-9 pr-8 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all placeholder:text-slate-400 text-slate-900 font-medium"
                             />
                             <button
                                 type="button"
@@ -552,7 +552,7 @@ const Main_Table = ({
                                             onDragOver={handleDragOver}
                                             onDrop={(e) => handleDrop(e, header.id)}
                                             className={`whitespace-nowrap px-5 py-3.5 text-xs font-bold text-slate-600 uppercase tracking-wider relative transition-colors ${isFirstColumn
-                                                ? 'sticky left-0 z-30 bg-slate-50 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]'
+                                                ? 'md:sticky md:left-0 md:z-30 bg-slate-50 md:border-r md:border-slate-200 md:shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]'
                                                 : ''
                                                 } ${draggedColumnId === header.id ? 'opacity-40 bg-slate-200' : ''} ${canSort ? 'cursor-pointer select-none hover:text-slate-900' : ''
                                                 }`}
@@ -873,7 +873,7 @@ const Main_Table = ({
                                             <td
                                                 key={cell.id}
                                                 className={`whitespace-nowrap px-5 py-3.5 align-middle ${isFirstColumn
-                                                    ? 'sticky left-0 z-10 bg-white group-hover:bg-slate-50 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]'
+                                                    ? 'md:sticky md:left-0 md:z-10 bg-white group-hover:bg-slate-50 md:border-r md:border-slate-200 md:shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]'
                                                     : ''
                                                     }`}
                                             >

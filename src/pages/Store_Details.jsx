@@ -416,7 +416,7 @@ const Store_Details = () => {
         </div>
 
         {/* Right Column: Activity Timeline */}
-        <div className="md:col-span-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="md:col-span-8 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
             <h2 className="font-bold text-slate-900 text-sm uppercase tracking-wider">
               Activity Timeline
@@ -426,7 +426,7 @@ const Store_Details = () => {
             </span>
           </div>
 
-          <div className="space-y-6 pt-1">
+          <div className="space-y-4 sm:space-y-6 pt-1">
             {totalTimelineRecords > 0 ? (
               paginatedTimelineEvents.map((eventItem, idx) => {
                 const rawDateStr = typeof eventItem === 'string' ? eventItem : (eventItem?.date || eventItem?.timestamp || eventItem?.createdAt);
@@ -449,29 +449,29 @@ const Store_Details = () => {
                 const isLastInPage = idx === paginatedTimelineEvents.length - 1;
 
                 return (
-                  <div key={idx} className="flex gap-4 items-center">
+                  <div key={idx} className="flex gap-2 sm:gap-4 items-center">
                     {/* Left Date Stack */}
-                    <div className="min-w-16.25 text-right">
-                      <p className="font-bold text-slate-900 text-xs leading-tight">
+                    <div className="w-13 sm:w-16 shrink-0 text-right">
+                      <p className="font-bold text-slate-900 text-[11px] sm:text-xs leading-tight">
                         {dateStr}
                       </p>
-                      <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">
+                      <span className="text-[10px] sm:text-[11px] text-slate-400 font-semibold block mt-0.5">
                         {yearStr}
                       </span>
                     </div>
 
                     {/* Timeline Node & Line */}
-                    <div className="flex flex-col items-center relative self-stretch justify-center">
-                      <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-900 bg-white z-10 my-auto" />
+                    <div className="flex flex-col items-center relative self-stretch justify-center shrink-0">
+                      <div className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border-2 border-slate-900 bg-white z-10 my-auto shrink-0" />
                       {!isLastInPage && (
                         <div className="w-px bg-slate-200 absolute top-1/2 bottom-0 left-1/2 -translate-x-1/2" />
                       )}
                     </div>
 
                     {/* Right Event Card */}
-                    <div className={`flex-1 p-3 px-4 rounded-xl border ${eventObj.isCurrentEvent ? 'border-indigo-200 bg-indigo-50/50' : 'border-slate-100 bg-slate-50'}`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="font-bold text-slate-900 text-sm">
+                    <div className={`flex-1 min-w-0 p-2.5 sm:p-3 sm:px-4 rounded-xl border ${eventObj.isCurrentEvent ? 'border-indigo-200 bg-indigo-50/50' : 'border-slate-100 bg-slate-50'}`}>
+                      <div className="flex flex-wrap items-center justify-between gap-1.5">
+                        <p className="font-bold text-slate-900 text-xs sm:text-sm truncate">
                           {eventTitle}
                         </p>
                         {(() => {
@@ -494,18 +494,16 @@ const Store_Details = () => {
                           }
 
                           return (
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border ${badgeClass}`}>
+                            <span className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-semibold border shrink-0 ${badgeClass}`}>
                               {badgeText}
                             </span>
                           );
                         })()}
                       </div>
-                      <span className="text-xs text-slate-400 block mt-1">
+                      <span className="text-[11px] sm:text-xs text-slate-400 block mt-1">
                         {timeStr}
                       </span>
                     </div>
-
-
                   </div>
                 );
               })
@@ -518,7 +516,7 @@ const Store_Details = () => {
 
           {/* Timeline Pagination Controls */}
           {totalTimelinePages > 1 && (
-            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
               <span>
                 Showing <span className="font-semibold text-slate-900">{(timelinePage - 1) * timelineLimit + 1}</span> to{' '}
                 <span className="font-semibold text-slate-900">{Math.min(timelinePage * timelineLimit, totalTimelineRecords)}</span> of{' '}

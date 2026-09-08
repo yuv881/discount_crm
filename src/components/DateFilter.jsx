@@ -238,9 +238,9 @@ const DateFilter = ({
 
             {/* Side-by-Side Floating Popover Card */}
             {isOpen && (
-                <div className="absolute right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 p-4 text-xs animate-in fade-in zoom-in-95 duration-150 w-135 sm:w-145 flex flex-col sm:flex-row gap-4">
+                <div className="absolute right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 p-4 text-xs animate-in fade-in zoom-in-95 duration-150 w-[calc(100vw-2rem)] sm:w-140 max-w-sm sm:max-w-md flex flex-col sm:flex-row gap-4 max-h-[85vh] overflow-y-auto">
                     {/* Left Panel: Preset Filters List */}
-                    <div className="w-full sm:w-44 shrink-0 flex flex-col justify-between border-b sm:border-b-0 sm:border-r border-slate-100 pb-3 sm:pb-0 sm:pr-3">
+                    <div className="w-full sm:w-40 shrink-0 flex flex-col justify-between border-b sm:border-b-0 sm:border-r border-slate-100 pb-3 sm:pb-0 sm:pr-3">
                         <div>
                             <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 font-bold text-slate-400 uppercase tracking-wider text-[10px]">
                                 <span>Presets</span>

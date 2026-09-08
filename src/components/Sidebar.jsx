@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Store, TrendingUp, Settings } from 'lucide-react';
+import { Store, TrendingUp, Settings, X } from 'lucide-react';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen = false, onClose }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -10,20 +10,49 @@ const Sidebar = () => {
         { text: 'Analytics', icon: <TrendingUp className="w-4 h-4" />, path: '/analytics' },
     ];
 
+    const handleNavigate = (path) => {
+        navigate(path);
+        if (onClose) onClose();
+    };
+
     return (
-        <aside className="w-60 shrink-0 bg-white border-r border-slate-200 h-screen sticky top-0 flex flex-col justify-between select-none z-40">
+        <>
+            {/* Mobile Backdrop overlay */}
+            {isOpen && (
+                <div
+                    className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 md:hidden transition-opacity"
+                    onClick={onClose}
+                />
+            )}
+
+            <aside
+                className={`fixed md:sticky top-0 left-0 h-screen w-64 md:w-60 bg-white border-r border-slate-200 flex flex-col justify-between select-none z-50 transition-transform duration-200 ease-in-out ${
+                    isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+                }`}
+            >
             <div>
                 {/* Brand Header */}
-                <div className="p-5 flex items-center gap-3 border-b border-slate-100">
-                    <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-semibold shadow-xs">
-                        <Store className="w-5 h-5 text-white" />
+                <div className="p-5 flex items-center justify-between border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-semibold shadow-xs">
+                            <Store className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                            <h1 className="font-bold text-slate-900 text-base leading-tight">
+                                Discount Ninja
+                            </h1>
+                            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">CRM Dashboard</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="font-bold text-slate-900 text-base leading-tight">
-                            Discount Ninja
-                        </h1>
-                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">CRM Dashboard</p>
-                    </div>
+                    {/* Mobile close button */}
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                        title="Close Menu"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
                 </div>
 
                 {/* Navigation Links */}
@@ -41,7 +70,7 @@ const Sidebar = () => {
                                 <li key={item.text}>
                                     <button
                                         type="button"
-                                        onClick={() => navigate(item.path)}
+                                        onClick={() => handleNavigate(item.path)}
                                         className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                                             isActive
                                                 ? 'bg-slate-100 text-slate-900 font-bold'
@@ -71,6 +100,7 @@ const Sidebar = () => {
                 </button>
             </div>
         </aside>
+        </>
     );
 };
 
