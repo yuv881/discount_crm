@@ -34,6 +34,18 @@ app.get('/api/health', (req, res) => {
 app.use('/api/stores', storesRouter);
 app.use('/api/analytics', analyticsRouter);
 
+// Serve static frontend in production
+const distPath = path.join(__dirname, '../dist');
+app.use(express.static(distPath));
+
+// Fallback for client-side routing (React Router)
+app.get('*', (req, res, next) => {
+  if (req.originalUrl.startsWith('/api')) {
+    return next();
+  }
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
 // Global Error Handler
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
@@ -45,8 +57,8 @@ app.use((err, req, res, next) => {
 async function startServer() {
   try {
     await connectDB();
-    app.listen(PORT, () => {
-      console.log(`🚀 CRM Backend server running on http://localhost:${PORT}`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 CRM Backend server running on http://0.0.0.0:${PORT}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
