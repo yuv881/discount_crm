@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import All_Stores from './pages/All_Stores';
 import Store_Details from './pages/Store_Details';
@@ -7,6 +7,7 @@ import Sidebar from './components/Sidebar';
 import DateFilter from './components/DateFilter';
 import { useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Copy, Check, Menu } from 'lucide-react';
+import Login from './pages/Login';
 
 
 function NavigationBar({
@@ -92,7 +93,7 @@ function NavigationBar({
                 {storeName}
               </h1>
               <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
-                <span className="text-xs font-medium text-slate-500 truncate max-w-[150px] sm:max-w-none">{storeDomain}</span>
+                <span className="text-xs font-medium text-slate-500 truncate max-w-37.5 sm:max-w-none">{storeDomain}</span>
                 <button
                   type="button"
                   onClick={handleCopyDomain}
@@ -152,19 +153,93 @@ function NavigationBar({
 function App() {
   const [totalStoresCount, setTotalStoresCount] = useState(0);
 
+  const checkAuth = () => {
+    try {
+      const stored = localStorage.getItem('auth_user');
+      if (!stored) return false;
+      const parsed = JSON.parse(stored);
+      // If expiresAt is set and has passed, expire the session
+      if (parsed?.expiresAt && Date.now() >= parsed.expiresAt) {
+        localStorage.removeItem('auth_user');
+        return false;
+      }
+      return Boolean(parsed?.username);
+    } catch {
+      localStorage.removeItem('auth_user');
+      return false;
+    }
+  };
+
+  const [isAuthenticated, setIsAuthenticated] = useState(checkAuth);
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_user');
+    setIsAuthenticated(false);
+  };
+
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
+  // 1-hour auto-logout effect
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Schedule timeout until expiration
+    let timerId;
+    try {
+      const stored = localStorage.getItem('auth_user');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed?.expiresAt) {
+          const remainingMs = Math.max(0, parsed.expiresAt - Date.now());
+          timerId = setTimeout(() => {
+            handleLogout();
+          }, remainingMs);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    // Periodic check every minute in case system clock changes or tab was suspended
+    const intervalId = setInterval(() => {
+      if (!checkAuth()) {
+        handleLogout();
+      }
+    }, 60 * 1000);
+
+    return () => {
+      if (timerId) clearTimeout(timerId);
+      clearInterval(intervalId);
+    };
+  }, [isAuthenticated]);
+
+  if (!isAuthenticated) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <Router>
-      <AppContent totalStoresCount={totalStoresCount} setTotalStoresCount={setTotalStoresCount} />
+      <AppContent
+        totalStoresCount={totalStoresCount}
+        setTotalStoresCount={setTotalStoresCount}
+        onLogout={handleLogout}
+      />
     </Router>
   );
 }
 
-function AppContent({ totalStoresCount, setTotalStoresCount }) {
+function AppContent({ totalStoresCount, setTotalStoresCount, onLogout }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans">
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        onLogout={onLogout}
+      />
       <div className="flex-1 flex flex-col min-w-0">
         <NavigationBar
           totalCount={totalStoresCount}

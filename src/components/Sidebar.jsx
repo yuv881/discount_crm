@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Store, TrendingUp, Settings, X } from 'lucide-react';
+import { Store, TrendingUp, Settings, X, LogOut } from 'lucide-react';
 
-const Sidebar = ({ isOpen = false, onClose }) => {
+const Sidebar = ({ isOpen = false, onClose, onLogout }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -13,6 +13,15 @@ const Sidebar = ({ isOpen = false, onClose }) => {
     const handleNavigate = (path) => {
         navigate(path);
         if (onClose) onClose();
+    };
+
+    const handleLogoutClick = () => {
+        if (onLogout) {
+            onLogout();
+        } else {
+            localStorage.removeItem('auth_user');
+            window.location.reload();
+        }
     };
 
     return (
@@ -89,14 +98,22 @@ const Sidebar = ({ isOpen = false, onClose }) => {
                 </nav>
             </div>
 
-            {/* Footer / Settings */}
-            <div className="p-3 border-t border-slate-100">
+            {/* Footer / Settings & Logout */}
+            <div className="p-3 border-t border-slate-100 space-y-1">
                 <button
                     type="button"
                     className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
                 >
                     <Settings className="w-4 h-4 text-slate-500" />
                     Settings
+                </button>
+                <button
+                    type="button"
+                    onClick={handleLogoutClick}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
+                >
+                    <LogOut className="w-4 h-4 text-rose-500" />
+                    Sign Out
                 </button>
             </div>
         </aside>
