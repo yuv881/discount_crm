@@ -17,8 +17,10 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Eye,
 } from 'lucide-react';
 import { StoreDetailsSkeleton } from '../components/SkeletonLoader';
+import { DiscountDetailsModal } from '../components/DiscountDetailsModal';
 
 const Store_Details = () => {
   const { domain } = useParams();
@@ -27,6 +29,7 @@ const Store_Details = () => {
   const [storeData, setStoreData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedDiscount, setSelectedDiscount] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -229,6 +232,24 @@ const Store_Details = () => {
             >
               {label}
             </span>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        enableSorting: false,
+        cell: ({ row }) => {
+          return (
+            <button
+              type="button"
+              onClick={() => setSelectedDiscount(row.original)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50/50 shadow-2xs text-xs font-semibold transition-all duration-150 cursor-pointer group"
+              title="View discount details"
+            >
+              <Eye className="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-600 transition-colors" />
+              <span>View</span>
+            </button>
           );
         },
       },
@@ -651,6 +672,13 @@ const Store_Details = () => {
         )}
 
       </div>
+
+      {/* Discount Details Popup Modal */}
+      <DiscountDetailsModal
+        discount={selectedDiscount}
+        isOpen={Boolean(selectedDiscount)}
+        onClose={() => setSelectedDiscount(null)}
+      />
     </div>
   );
 };
