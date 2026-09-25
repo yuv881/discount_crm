@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://discount-crm.onrender.com/sitemap.xml

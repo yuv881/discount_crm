@@ -1,19 +1,13 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Store, TrendingUp, Settings, X, LogOut } from 'lucide-react';
 
 const Sidebar = ({ isOpen = false, onClose, onLogout }) => {
-    const navigate = useNavigate();
     const location = useLocation();
 
     const menuItems = [
         { text: 'Stores Directory', icon: <Store className="w-4 h-4" />, path: '/' },
         { text: 'Analytics', icon: <TrendingUp className="w-4 h-4" />, path: '/analytics' },
     ];
-
-    const handleNavigate = (path) => {
-        navigate(path);
-        if (onClose) onClose();
-    };
 
     const handleLogoutClick = () => {
         if (onLogout) {
@@ -77,9 +71,11 @@ const Sidebar = ({ isOpen = false, onClose, onLogout }) => {
 
                             return (
                                 <li key={item.text}>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleNavigate(item.path)}
+                                    <Link
+                                        to={item.path}
+                                        onClick={() => {
+                                            if (onClose) onClose();
+                                        }}
                                         className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                                             isActive
                                                 ? 'bg-slate-100 text-slate-900 font-bold'
@@ -90,7 +86,7 @@ const Sidebar = ({ isOpen = false, onClose, onLogout }) => {
                                             {item.icon}
                                         </span>
                                         {item.text}
-                                    </button>
+                                    </Link>
                                 </li>
                             );
                         })}

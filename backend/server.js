@@ -28,8 +28,10 @@ app.get('/api/health', (req, res) => {
 app.use('/api/stores', storesRouter);
 app.use('/api/analytics', analyticsRouter);
 
-// Serve static frontend in production
+// Serve static files
+const publicPath = path.join(__dirname, '../public');
 const distPath = path.join(__dirname, '../dist');
+app.use(express.static(publicPath));
 app.use(express.static(distPath));
 
 // Fallback for client-side routing (React Router)
